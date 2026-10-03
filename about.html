@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Project & Methodology - FloraScan AI</title>
+  <meta name="description" content="Technical documentation and architecture overview for FloraScan AI Plant Disease Detection system using Flask and TensorFlow.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="FloraScan Logo" class="nav-logo">
+        <span class="brand-title">FloraScan AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link">Detector</a></li>
+        <li><a href="{{ url_for('train') }}" class="nav-link">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}" class="nav-link active">About Project</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <section class="hero" style="margin-bottom: 2.5rem;">
+      <div class="hero-badge">🔬 Technical Documentation</div>
+      <h1 class="hero-title">About <span>FloraScan AI</span></h1>
+      <p class="hero-subtitle">
+        An end-to-end computer vision web application designed to support farmers, gardeners, 
+        and agricultural researchers in diagnosing foliar crop diseases early.
+      </p>
+    </section>
+
+    <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem;">
+
+      <!-- Project Purpose -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">🎯</span>
+            Project Purpose & Motivation
+          </h2>
+        </div>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.7; margin-bottom: 1rem;">
+          Crop diseases are a primary cause of global food insecurity and economic loss in agriculture. 
+          Early and precise identification of foliar pathogens—such as fungal blights, bacterial leaf spots, 
+          and viral curling—enables targeted intervention before infections devastate entire fields.
+        </p>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.7;">
+          FloraScan AI provides an accessible, automated diagnostic interface that transforms a standard smartphone 
+          photograph into an actionable diagnostic report with confidence scores, pathological descriptions, 
+          and educational management guidelines.
+        </p>
+      </section>
+
+      <!-- Machine Learning Architecture -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">🧠</span>
+            Machine Learning & Transfer Learning Pipeline
+          </h2>
+        </div>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.7; margin-bottom: 1.25rem;">
+          The core model leverages <strong>Transfer Learning</strong> using the <strong>MobileNetV2</strong> 
+          convolutional neural network architecture, pretrained on ImageNet:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 1rem;">
+            <div style="font-weight: 700; color: var(--primary-light); margin-bottom: 0.25rem;">1. Image Preprocessing</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Input leaf images are normalized to 224×224 pixels and scaled between [-1, 1] using standard MobileNetV2 preprocessing.
+            </p>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 1rem;">
+            <div style="font-weight: 700; color: var(--primary-light); margin-bottom: 0.25rem;">2. Depthwise Separable Convolutions</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              MobileNetV2 employs inverted residual blocks and linear bottlenecks, delivering fast inference on standard CPU hardware.
+            </p>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); border-radius: 12px; padding: 1rem;">
+            <div style="font-weight: 700; color: var(--primary-light); margin-bottom: 0.25rem;">3. Custom Classification Head</div>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">
+              Features are condensed via GlobalAveragePooling2D, stabilized with BatchNormalization, and classified using Dropout-regularized Dense layers.
+            </p>
+          </div>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.9rem;">
+          During training, real-time data augmentations (random flips, rotations, zoom variations, and contrast adjustments) 
+          are applied on-the-fly to enhance generalization across varied lighting and leaf orientations.
+        </p>
+      </section>
+
+      <!-- Technology Stack -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">⚡</span>
+            System Architecture & Stack
+          </h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+          <div>
+            <h3 style="font-size: 1rem; color: var(--primary-light); margin-bottom: 0.5rem;">Backend Engine</h3>
+            <ul style="list-style: none; font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
+              <li>• <strong>Python 3.10+</strong></li>
+              <li>• <strong>Flask 3.x:</strong> REST API & routing</li>
+              <li>• <strong>TensorFlow / Keras:</strong> Deep learning inference</li>
+              <li>• <strong>NumPy:</strong> Tensor operations</li>
+              <li>• <strong>Pillow (PIL):</strong> Image validation & decoding</li>
+              <li>• <strong>Werkzeug:</strong> Secure upload handling</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 style="font-size: 1rem; color: var(--primary-light); margin-bottom: 0.5rem;">Frontend Interface</h3>
+            <ul style="list-style: none; font-size: 0.88rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.4rem;">
+              <li>• <strong>HTML5 & Semantic Markup</strong></li>
+              <li>• <strong>Vanilla CSS3:</strong> Custom design system</li>
+              <li>• <strong>Modern JavaScript (ES6+):</strong> Fetch API & DOM</li>
+              <li>• <strong>Jinja2:</strong> Server-side rendering</li>
+              <li>• <strong>Glassmorphism & Micro-animations</strong></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Prediction Workflow Diagram -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">🔄</span>
+            Prediction Workflow
+          </h2>
+        </div>
+        <div style="background: #05090d; border: 1px solid var(--border-glass); border-radius: 12px; padding: 1.5rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-main); line-height: 1.8;">
+          <span style="color: var(--primary-light);">[Client Browser]</span> User selects leaf image (Drag & Drop or File Picker)<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: var(--primary-light);">[Client JS]</span> Validates image MIME type and file size (< 16MB)<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: #38bdf8;">[POST /api/predict]</span> Transmits multipart/form-data via Fetch API<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: #f59e0b;">[Flask Backend]</span> Werkzeug sanitizes filename → Saves to uploads/ → PIL verifies image<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: #a855f7;">[predict.py]</span> Resizes to (224, 224, 3) → Applies MobileNetV2 preprocessing<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: #a855f7;">[Keras Model]</span> Forward pass computes softmax probability distribution<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: #38bdf8;">[disease_info.py]</span> Looks up botanical description, symptoms, and organic/chemical treatments<br>
+          &nbsp;&nbsp;↓<br>
+          <span style="color: var(--primary-light);">[JSON Response]</span> Sent back to browser → DOM updates dynamically with confidence bar!
+        </div>
+      </section>
+
+      <!-- Dataset Compatibility & Guidelines -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">📂</span>
+            Dataset Organization
+          </h2>
+        </div>
+        <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.7; margin-bottom: 1rem;">
+          The system dynamically discovers classes directly from folder structures (compatible with the PlantVillage benchmark dataset):
+        </p>
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 10px; padding: 1rem; font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+          dataset/<br>
+          ├── train/<br>
+          │&nbsp;&nbsp;&nbsp;├── Apple___Apple_scab/<br>
+          │&nbsp;&nbsp;&nbsp;├── Tomato___Early_blight/<br>
+          │&nbsp;&nbsp;&nbsp;└── Tomato___healthy/<br>
+          └── validation/ (optional, or 80/20 auto-split)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;├── Apple___Apple_scab/<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;└── Tomato___Early_blight/
+        </div>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.75rem;">
+          Folders formatted as <code>CropName___DiseaseName</code> or <code>CropName_Disease</code> are automatically mapped to clean user-friendly labels.
+        </p>
+      </section>
+
+      <!-- Limitations and Agricultural Disclaimer -->
+      <section class="card" style="border-color: rgba(245, 158, 11, 0.3);">
+        <div class="card-header">
+          <h2 class="card-title" style="color: #fde68a;">
+            <span class="card-title-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">⚠️</span>
+            Limitations & Agricultural Disclaimer
+          </h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.92rem; color: #cbd5e1; line-height: 1.7;">
+          <p>
+            <strong>Statistical Uncertainty:</strong> Deep learning computer vision models evaluate visual textures, contours, and color spectra. They cannot detect microscopic cellular bacteria or viral RNA directly. Unfavorable lighting, shadows, low resolution, or non-foliar elements may affect confidence.
+          </p>
+          <p>
+            <strong>Professional Agronomic Consultation:</strong> Predictions and treatment steps provided by FloraScan AI are intended strictly for <em>educational, research, and preliminary screening purposes</em>. They do not constitute certified agronomic prescriptions.
+          </p>
+          <p>
+            <strong>Pesticide Safety:</strong> Always consult your local agricultural extension office, certified crop adviser (CCA), or university plant pathology clinic before making commercial spraying decisions or purchasing chemical treatments.
+          </p>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>FloraScan AI — Deep Learning Plant Disease Classification System</p>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('index') }}">Detector</a></li>
+        <li><a href="{{ url_for('train') }}">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}">About Project</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>

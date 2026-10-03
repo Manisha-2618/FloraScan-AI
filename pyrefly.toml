@@ -1,0 +1,11 @@
+# pyrefly.toml - Configuration for Pyrefly Python language server in Antigravity IDE
+python-interpreter-path = "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Scripts/python.exe"
+search-path = [
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject",
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Lib/site-packages",
+  "C:/Users/PythonTeam/AppData/Roaming/Python/Python313/site-packages"
+]
+site-package-path = [
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Lib/site-packages",
+  "C:/Users/PythonTeam/AppData/Roaming/Python/Python313/site-packages"
+]

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FloraScan AI - Deep Learning Plant Disease Diagnosis</title>
+  <meta name="description" content="AI-powered plant leaf disease detection using Convolutional Neural Networks and Transfer Learning. Identify crop diseases instantly and receive educational management advice.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="FloraScan Logo" class="nav-logo">
+        <span class="brand-title">FloraScan AI</span>
+        <span class="brand-tag">v2.0</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link active">Detector</a></li>
+        <li><a href="{{ url_for('train') }}" class="nav-link">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}" class="nav-link">About Project</a></li>
+        <li>
+          {% if model_loaded %}
+            <span class="status-badge" title="{{ class_count }} pathology classes loaded"><span class="status-dot"></span> ML Ready ({{ class_count }} Classes)</span>
+          {% else %}
+            <span class="status-badge warning" title="Model weights need training"><span class="status-dot"></span> Untrained Model</span>
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+
+    <!-- Hero Header -->
+    <section class="hero">
+      <div class="hero-badge">🌿 Intelligent Crop Pathology Engine</div>
+      <h1 class="hero-title">Diagnose Plant Diseases <span>With Deep Learning</span></h1>
+      <p class="hero-subtitle">
+        Upload or drop an image of an affected crop leaf to analyze visible symptoms, 
+        estimate disease classification probabilities, and review recommended agricultural management steps.
+      </p>
+    </section>
+
+    <!-- Error Alert Box -->
+    <div id="errorAlert" class="alert alert-danger" style="display: {% if model_error and not model_loaded %}flex{% else %}none{% endif %};">
+      <span style="font-size: 1.25rem;">⚠️</span>
+      <span id="errorMessage">{{ model_error or "An error occurred." }}</span>
+    </div>
+
+    <!-- Diagnostic Workspace Grid -->
+    <div class="detector-grid">
+
+      <!-- Left Column: Upload & Sample Picker -->
+      <section class="card upload-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">📷</span>
+            Upload Leaf Specimen
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Max 16MB (PNG, JPG, WEBP)</span>
+        </div>
+
+        <!-- HTML5 Form for standard fallback + JS enhancement -->
+        <form id="uploadForm" action="{{ url_for('predict') }}" method="POST" enctype="multipart/form-data">
+          
+          <!-- Drag & Drop Zone -->
+          <div class="dropzone" id="dropzone">
+            <div class="dropzone-icon">🌱</div>
+            <p class="dropzone-text">Drag & drop your leaf image here</p>
+            <p class="dropzone-subtext">or click to browse from your device</p>
+            <button type="button" class="btn btn-secondary btn-sm" id="browseBtn">Browse Files</button>
+            <p class="dropzone-hint" style="margin-top: 1rem;">Supports close-up foliage images</p>
+          </div>
+
+          <input type="file" id="fileInput" name="image" class="file-input" accept="image/png, image/jpeg, image/jpg, image/webp">
+
+          <!-- Image Preview Card -->
+          <div class="preview-container" id="previewContainer">
+            <div class="preview-wrapper">
+              <img id="previewImage" class="preview-image" src="" alt="Selected Leaf Specimen">
+            </div>
+            <div class="preview-meta">
+              <span id="previewName">leaf_specimen.jpg</span>
+              <span id="previewSize">0 KB</span>
+            </div>
+            <div class="preview-actions">
+              <button type="button" class="btn btn-primary btn-block" id="analyzeBtn">
+                <span>🔍</span> Run AI Diagnosis
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="removeImageBtn" title="Remove Image">✕</button>
+            </div>
+          </div>
+
+        </form>
+
+        <!-- Sample Leaf Test Triggers -->
+        <div class="samples-card">
+          <div class="samples-title">
+            <span>💡</span> Quick Test With Sample Leaves:
+          </div>
+          <div class="samples-chips">
+            <button type="button" class="sample-chip" data-sample="{{ url_for('static', filename='images/samples/apple_scab.jpg') }}">Apple Scab</button>
+            <button type="button" class="sample-chip" data-sample="{{ url_for('static', filename='images/samples/tomato_early_blight.jpg') }}">Tomato Early Blight</button>
+            <button type="button" class="sample-chip" data-sample="{{ url_for('static', filename='images/samples/corn_rust.jpg') }}">Corn Rust</button>
+            <button type="button" class="sample-chip" data-sample="{{ url_for('static', filename='images/samples/tomato_healthy.jpg') }}">Tomato Healthy</button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Results & Analysis Output -->
+      <section class="card result-container-card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">📊</span>
+            Pathology Diagnosis
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Real-Time Classification</span>
+        </div>
+
+        <!-- Initial Blank State -->
+        <div class="result-empty" id="emptyState">
+          <div class="empty-icon">🍃</div>
+          <h3>Awaiting Leaf Image</h3>
+          <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+            Select an image on the left and click <strong>Run AI Diagnosis</strong> to extract neural predictions.
+          </p>
+        </div>
+
+        <!-- Animated Loading State -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+          <h3 class="loading-text" id="loadingStatusText">Analyzing leaf features...</h3>
+          <p class="loading-subtext">Evaluating convolutional feature maps across MobileNetV2 architecture</p>
+        </div>
+
+        <!-- Dynamic Result Card -->
+        <div class="result-card" id="resultCard">
+          
+          <div class="diagnosis-header">
+            <div class="diagnosis-title-group">
+              <div class="plant-badge" id="resultPlantBadge">Plant: Tomato</div>
+              <h3 class="disease-name" id="resultDiseaseName">Tomato Early Blight</h3>
+            </div>
+            <div class="confidence-box">
+              <div class="confidence-value" id="resultConfidence">98.4%</div>
+              <div class="confidence-label">Confidence</div>
+            </div>
+          </div>
+
+          <!-- Animated Confidence Bar -->
+          <div class="confidence-bar-container">
+            <div class="confidence-bar-fill" id="confidenceBarFill"></div>
+          </div>
+
+          <!-- Description -->
+          <div class="info-section">
+            <h4 class="info-section-title"><span>📖</span> Disease Overview</h4>
+            <p class="info-description" id="resultDescription"></p>
+          </div>
+
+          <!-- Symptoms -->
+          <div class="info-section">
+            <h4 class="info-section-title"><span>🔍</span> Characteristic Symptoms</h4>
+            <ul class="symptoms-list" id="symptomsList"></ul>
+          </div>
+
+          <!-- Suggested Treatment & Prevention -->
+          <div class="info-section">
+            <h4 class="info-section-title"><span>🛡️</span> Suggested Management & Prevention</h4>
+            <ul class="treatment-list" id="treatmentList"></ul>
+          </div>
+
+          <!-- Top Predictions Breakdown -->
+          <div class="info-section" id="topPredictionsContainer" style="display: none;">
+            <h4 class="info-section-title"><span>📈</span> Alternative Class Candidates</h4>
+            <div id="topPredictionsList" style="background: rgba(0,0,0,0.25); padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid var(--border-glass);"></div>
+          </div>
+
+          <!-- Disclaimer Note -->
+          <div class="disclaimer-banner">
+            <span class="disclaimer-icon">ℹ️</span>
+            <span id="resultDisclaimer">
+              Educational guidance only. Always consult a regional agricultural specialist or certified plant pathologist before applying treatments.
+            </span>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p><strong>FloraScan AI</strong> — Deep Learning Plant Disease Classification System</p>
+      <p>Built with Python Flask, TensorFlow MobileNetV2, and Vanilla JavaScript.</p>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('index') }}">Detector</a></li>
+        <li><a href="{{ url_for('train') }}">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}">About & Methodology</a></li>
+        <li><a href="{{ url_for('api_health') }}" target="_blank">API Health Status</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

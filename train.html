@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Training Dashboard - FloraScan AI</title>
+  <meta name="description" content="FloraScan AI model training control panel. Monitor transfer learning parameters, inspect dataset classes, and train MobileNetV2 CNN.">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="FloraScan Logo" class="nav-logo">
+        <span class="brand-title">FloraScan AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link">Detector</a></li>
+        <li><a href="{{ url_for('train') }}" class="nav-link active">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}" class="nav-link">About Project</a></li>
+        <li>
+          {% if model_loaded %}
+            <span class="status-badge"><span class="status-dot"></span> Model Ready</span>
+          {% else %}
+            <span class="status-badge warning"><span class="status-dot"></span> Untrained</span>
+          {% endif %}
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Header Section -->
+    <section class="hero" style="margin-bottom: 2rem;">
+      <div class="hero-badge">⚙️ Machine Learning Pipeline</div>
+      <h1 class="hero-title">Model <span>Training Dashboard</span></h1>
+      <p class="hero-subtitle">
+        Manage the transfer learning pipeline, inspect dataset distribution, 
+        and retrain the MobileNetV2 convolutional neural network.
+      </p>
+    </section>
+
+    <!-- Key Metrics Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Detected Classes</div>
+        <div class="stat-value highlight">{{ stats.train_classes|length }}</div>
+        <span style="font-size: 0.75rem; color: var(--text-dim);">Categorized pathology folders</span>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Training Images</div>
+        <div class="stat-value">{{ stats.train_image_count }}</div>
+        <span style="font-size: 0.75rem; color: var(--text-dim);">In dataset/train/</span>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Validation Images</div>
+        <div class="stat-value">{{ stats.val_image_count if stats.val_image_count > 0 else '80/20 Auto-Split' }}</div>
+        <span style="font-size: 0.75rem; color: var(--text-dim);">Evaluation data</span>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-label">Current Model Size</div>
+        <div class="stat-value">{{ model_size_mb }} MB</div>
+        <span style="font-size: 0.75rem; color: var(--text-dim);">{{ 'Loaded in memory' if model_loaded else 'Weights not loaded' }}</span>
+      </div>
+    </div>
+
+    <!-- Training Control & Status Grid -->
+    <div class="detector-grid" style="margin-bottom: 2.5rem;">
+
+      <!-- Left Card: Retrain Controller -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">🚀</span>
+            Train Classifier
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">MobileNetV2 Transfer Learning</span>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Initiate training directly from this web console. Training runs in an asynchronous background thread 
+          without interrupting web server responsiveness.
+        </p>
+
+        <!-- Training Form -->
+        <form id="webTrainForm" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <label for="epochsInput" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">
+                Epochs
+              </label>
+              <input type="number" id="epochsInput" name="epochs" value="5" min="1" max="25" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); color: #fff; font-family: var(--font-mono);">
+            </div>
+            <div>
+              <label for="batchSizeInput" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.4rem;">
+                Batch Size
+              </label>
+              <input type="number" id="batchSizeInput" name="batch_size" value="16" min="4" max="64" step="4" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); color: #fff; font-family: var(--font-mono);">
+            </div>
+          </div>
+
+          <button type="submit" id="startTrainBtn" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+            <span>▶</span> Start Model Training
+          </button>
+        </form>
+
+        <!-- Progress Indicator -->
+        <div id="trainProgressContainer" style="display: none; margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+            <span id="trainStatusLabel" style="color: var(--primary-light); font-weight: 600;">Training in progress...</span>
+            <span id="trainPercentLabel" style="font-family: var(--font-mono); font-weight: 700;">0%</span>
+          </div>
+          <div class="confidence-bar-container" style="margin: 0;">
+            <div id="trainProgressBar" class="confidence-bar-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Terminal Output Window -->
+        <div style="margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Console Output Log:</span>
+            <span id="liveStatusBadge" style="font-size: 0.7rem; color: var(--text-dim);">Status: Idle</span>
+          </div>
+          <div class="terminal-box" id="trainLogsTerminal">Ready to train. Click "Start Model Training" or run via command line.</div>
+        </div>
+
+      </section>
+
+      <!-- Right Card: CLI Command & Architecture Overview -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">💻</span>
+            CLI Training Pipeline
+          </h2>
+          <span style="font-size: 0.8rem; color: var(--text-dim);">Standalone Script</span>
+        </div>
+
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Prefer running training via terminal? Run the standalone <code style="color: var(--primary-light);">train.py</code> script:
+        </p>
+
+        <div class="command-snippet">
+          <code>python train.py</code>
+          <span style="font-size: 0.75rem; color: var(--text-dim);">Default: 5 Epochs</span>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 0.5rem;">
+          Customizable training flags:
+        </p>
+        <div class="command-snippet" style="font-size: 0.82rem;">
+          <code>python train.py --epochs 10 --batch-size 32</code>
+        </div>
+
+        <div style="height: 1px; background: var(--border-glass); margin: 1.5rem 0;"></div>
+
+        <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-main);">
+          Pipeline Architecture Details:
+        </h3>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.85rem; color: var(--text-muted);">
+          <li style="display: flex; gap: 0.5rem;">
+            <span style="color: var(--primary-light);">▪</span>
+            <div><strong>Backbone:</strong> MobileNetV2 pretrained on ImageNet (frozen feature extraction layers)</div>
+          </li>
+          <li style="display: flex; gap: 0.5rem;">
+            <span style="color: var(--primary-light);">▪</span>
+            <div><strong>Input Shape:</strong> (224, 224, 3) normalized via mobilenet_v2.preprocess_input [-1, 1]</div>
+          </li>
+          <li style="display: flex; gap: 0.5rem;">
+            <span style="color: var(--primary-light);">▪</span>
+            <div><strong>Data Augmentation:</strong> RandomFlip, RandomRotation (0.15), RandomZoom (0.15), RandomContrast</div>
+          </li>
+          <li style="display: flex; gap: 0.5rem;">
+            <span style="color: var(--primary-light);">▪</span>
+            <div><strong>Classification Head:</strong> GlobalAveragePooling2D + BatchNorm + Dropout(0.3) + Dense(128) + Dropout(0.2) + Dense(Softmax)</div>
+          </li>
+          <li style="display: flex; gap: 0.5rem;">
+            <span style="color: var(--primary-light);">▪</span>
+            <div><strong>Model Output:</strong> <code>model/plant_disease_model.keras</code> and <code>model/class_names.json</code></div>
+          </li>
+        </ul>
+
+      </section>
+
+    </div>
+
+    <!-- Dataset Classes Breakdown Table -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">
+          <span class="card-title-icon">📁</span>
+          Dataset Pathology Classes ({{ stats.train_classes|length }})
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Located at dataset/train/</span>
+      </div>
+
+      {% if stats.train_classes %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+          {% for item in stats.train_classes %}
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass); border-radius: 10px; padding: 0.85rem 1rem; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong style="font-size: 0.9rem; color: var(--text-main);">
+                  {{ item.name.replace('___', ' - ').replace('_', ' ') }}
+                </strong>
+                <div style="font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-dim);">
+                  {{ item.name }}
+                </div>
+              </div>
+              <span class="plant-badge" style="margin: 0; font-size: 0.75rem;">{{ item.count }} imgs</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
+          <p>No dataset folders found in <code>dataset/train/</code>.</p>
+        </div>
+      {% endif %}
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>FloraScan AI — Deep Learning Plant Disease Classification System</p>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('index') }}">Detector</a></li>
+        <li><a href="{{ url_for('train') }}">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}">About Project</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <!-- Web Training JavaScript Handler -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const trainForm = document.getElementById("webTrainForm");
+      const startBtn = document.getElementById("startTrainBtn");
+      const terminal = document.getElementById("trainLogsTerminal");
+      const progressContainer = document.getElementById("trainProgressContainer");
+      const progressBar = document.getElementById("trainProgressBar");
+      const statusLabel = document.getElementById("trainStatusLabel");
+      const percentLabel = document.getElementById("trainPercentLabel");
+      const liveStatusBadge = document.getElementById("liveStatusBadge");
+
+      let pollInterval = null;
+
+      trainForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const epochs = document.getElementById("epochsInput").value || 5;
+        const batchSize = document.getElementById("batchSizeInput").value || 16;
+
+        startBtn.disabled = true;
+        progressContainer.style.display = "block";
+        statusLabel.textContent = "Initiating background training...";
+        liveStatusBadge.textContent = "Status: Running";
+        terminal.textContent = `[INIT] Requesting training run (${epochs} epochs)...\n`;
+
+        try {
+          const res = await fetch("/api/train", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ epochs: parseInt(epochs), batch_size: parseInt(batchSize) })
+          });
+          const data = await res.json();
+          if (!data.success) {
+            terminal.textContent += `[ERROR] ${data.error}\n`;
+            startBtn.disabled = false;
+            return;
+          }
+          terminal.textContent += `[INFO] ${data.message}\n`;
+          startPolling();
+        } catch (err) {
+          terminal.textContent += `[NETWORK ERROR] ${err.message}\n`;
+          startBtn.disabled = false;
+        }
+      });
+
+      function startPolling() {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(async () => {
+          try {
+            const res = await fetch("/api/train/status");
+            const data = await res.json();
+
+            if (data.logs && Array.isArray(data.logs)) {
+              terminal.textContent = data.logs.join("\n");
+              terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            const pct = data.progress || 0;
+            progressBar.style.width = pct + "%";
+            percentLabel.textContent = pct + "%";
+            statusLabel.textContent = `Epoch ${data.current_epoch} of ${data.total_epochs}`;
+
+            if (!data.is_running) {
+              clearInterval(pollInterval);
+              startBtn.disabled = false;
+              if (data.status === "completed") {
+                liveStatusBadge.textContent = "Status: Completed (Model updated)";
+                statusLabel.textContent = "Training Completed Successfully!";
+                progressBar.style.background = "#10b981";
+              } else if (data.status === "failed") {
+                liveStatusBadge.textContent = "Status: Failed";
+                statusLabel.textContent = "Training Failed.";
+                progressBar.style.background = "#f43f5e";
+              } else {
+                liveStatusBadge.textContent = "Status: Idle";
+              }
+            }
+          } catch (e) {
+            console.error("Polling error", e);
+          }
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>

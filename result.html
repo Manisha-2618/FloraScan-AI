@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnosis Result - FloraScan AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="nav-brand">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="FloraScan Logo" class="nav-logo">
+        <span class="brand-title">FloraScan AI</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link">Detector</a></li>
+        <li><a href="{{ url_for('train') }}" class="nav-link">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}" class="nav-link">About Project</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div style="max-width: 860px; margin: 0 auto;">
+      
+      <!-- Top Action Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm">
+          ← Back to Leaf Detector
+        </a>
+        <span style="font-size: 0.85rem; color: var(--text-muted);">Diagnosis Report</span>
+      </div>
+
+      {% if not success %}
+        <!-- Error State -->
+        <div class="card" style="text-align: center; padding: 3rem 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 0.75rem; color: #fda4af;">Diagnosis Could Not Be Completed</h2>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;">{{ error or "An unexpected issue occurred while analyzing the specimen." }}</p>
+          <a href="{{ url_for('index') }}" class="btn btn-primary">Try Another Image</a>
+        </div>
+
+      {% else %}
+        <!-- Successful Result Card -->
+        <div class="card" style="padding: 2.5rem;">
+          
+          <div style="display: grid; grid-template-columns: 280px 1fr; gap: 2.5rem; align-items: start;">
+            
+            <!-- Left: Uploaded Leaf Image -->
+            <div>
+              <div style="border-radius: 14px; overflow: hidden; background: #000; border: 1px solid var(--border-glass); height: 260px; display: flex; align-items: center; justify-content: center;">
+                <img src="{{ image_url }}" alt="Uploaded Plant Specimen" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+              </div>
+              <div style="text-align: center; margin-top: 1rem;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Uploaded Foliage Specimen</span>
+              </div>
+            </div>
+
+            <!-- Right: Primary Diagnosis Details -->
+            <div>
+              <div class="plant-badge">Plant: {{ plant }}</div>
+              <h1 class="disease-name {% if 'healthy' in disease.lower() %}healthy{% endif %}" style="margin-bottom: 1.25rem;">
+                {{ disease }}
+              </h1>
+
+              <!-- Confidence Meter -->
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-glass); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em;">Confidence Level</div>
+                  <div style="font-size: 1.75rem; font-weight: 800; font-family: var(--font-mono); color: var(--primary-light);">
+                    {{ confidence }}%
+                  </div>
+                </div>
+                <div style="font-size: 2rem;">
+                  {% if confidence >= 80 %}🎯{% elif confidence >= 50 %}🔍{% else %}❓{% endif %}
+                </div>
+              </div>
+
+              <!-- Bar Indicator -->
+              <div class="confidence-bar-container" style="margin-top: 1rem; margin-bottom: 0;">
+                <div class="confidence-bar-fill" style="width: {{ confidence }}%;"></div>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Divider -->
+          <div style="height: 1px; background: var(--border-glass); margin: 2rem 0;"></div>
+
+          <!-- Description -->
+          <div class="info-section">
+            <h3 class="info-section-title"><span>📖</span> Disease Description</h3>
+            <p class="info-description">{{ description }}</p>
+          </div>
+
+          <!-- Symptoms List -->
+          <div class="info-section">
+            <h3 class="info-section-title"><span>🔍</span> Observed Symptoms</h3>
+            <ul class="symptoms-list">
+              {% for symptom in symptoms %}
+                <li>{{ symptom }}</li>
+              {% else %}
+                <li>No specific pathological symptoms cataloged for this condition.</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Suggested Treatment / Prevention -->
+          <div class="info-section">
+            <h3 class="info-section-title"><span>🛡️</span> Suggested Treatment & Prevention</h3>
+            <ul class="treatment-list">
+              {% for step in treatment %}
+                <li>{{ step }}</li>
+              {% else %}
+                <li>Maintain standard cultural sanitation and irrigation routines.</li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Top Predictions Breakdown (if available) -->
+          {% if top_predictions and top_predictions|length > 1 %}
+            <div class="info-section">
+              <h3 class="info-section-title"><span>📈</span> Candidate Class Predictions</h3>
+              <div style="background: rgba(0,0,0,0.25); padding: 0.75rem 1.25rem; border-radius: 10px; border: 1px solid var(--border-glass);">
+                {% for cand in top_predictions %}
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <span>{{ cand.class_name.replace('___', ' - ').replace('_', ' ') }}</span>
+                    <strong style="color: var(--primary-light); font-family: var(--font-mono);">{{ cand.confidence }}%</strong>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Disclaimer Banner -->
+          <div class="disclaimer-banner">
+            <span class="disclaimer-icon">ℹ️</span>
+            <span>{{ disclaimer }}</span>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+              Diagnose Another Leaf
+            </a>
+            <a href="{{ url_for('train') }}" class="btn btn-secondary">
+              View Training Dashboard
+            </a>
+          </div>
+
+        </div>
+      {% endif %}
+
+    </div>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>FloraScan AI — Deep Learning Plant Disease Classification System</p>
+      <ul class="footer-links">
+        <li><a href="{{ url_for('index') }}">Detector</a></li>
+        <li><a href="{{ url_for('train') }}">Model Training</a></li>
+        <li><a href="{{ url_for('about') }}">About Project</a></li>
+      </ul>
+    </div>
+  </footer>
+
+</body>
+</html>

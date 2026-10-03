@@ -1,0 +1,17 @@
+[project]
+name = "plant-disease-project"
+version = "1.0.0"
+description = "Plant Disease Detection Web Application"
+requires-python = ">=3.9"
+
+[tool.pyrefly]
+python-interpreter-path = "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Scripts/python.exe"
+search-path = [
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject",
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Lib/site-packages",
+  "C:/Users/PythonTeam/AppData/Roaming/Python/Python313/site-packages"
+]
+site-package-path = [
+  "c:/Users/PythonTeam/Desktop/PlantDiseaseProject/venv/Lib/site-packages",
+  "C:/Users/PythonTeam/AppData/Roaming/Python/Python313/site-packages"
+]

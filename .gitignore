@@ -1,0 +1,90 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Datasets and training images
+dataset/
+datasets/
+starter_dataset/
+data/
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Large Machine Learning Models & Checkpoints
+*.h5
+*.hdf5
+*.keras
+*.tflite
+*.pb
+*.weights
+*.pt
+*.pth
+*.onnx
+*.bin
+model/*.h5
+model/*.hdf5
+model/*.keras
+model/*.tflite
+model/*.pt
+model/*.pth
+model/*.onnx
+model/checkpoints/
+
+# Preserve directory structure in uploads and model
+uploads/*
+!uploads/.gitkeep
+!model/class_names.json
+!model/.gitkeep
+
+# IDE, OS & Editor caches
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs & temporary files
+*.log
+*.tmp
+temp/
+tmp/
